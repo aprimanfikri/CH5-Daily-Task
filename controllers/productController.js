@@ -1,21 +1,31 @@
+const imagekit = require("../lib/imageKit");
 const { Product } = require("../models");
 
 const createProduct = async (req, res) => {
   const { name, price, stock } = req.body;
+  const file = req.file;
   try {
+    const split = file.originalname.split(".");
+    const extension = split[split.length - 1];
+    const img = await imagekit.upload({
+      file: file.buffer,
+      fileName: `IMG-${Date.now()}.${extension}`,
+    });
     const newProduct = await Product.create({
       name,
       price,
       stock,
+      imageUrl: img.url,
     });
-    res.status(200).json({
+    res.status(201).json({
       status: "success",
+      message: "Product created successfully",
       data: newProduct,
     });
   } catch (error) {
     res.status(500).json({
       status: "error",
-      message: error.message,
+      message: "Failed to create product: " + error.message,
     });
   }
 };
@@ -25,12 +35,13 @@ const findProducts = async (req, res) => {
     const products = await Product.findAll();
     res.status(200).json({
       status: "success",
+      message: "List of products found successfully",
       data: products,
     });
   } catch (error) {
     res.status(500).json({
       status: "error",
-      message: error.message,
+      message: "Failed to find products: " + error.message,
     });
   }
 };
@@ -42,14 +53,22 @@ const findProductById = async (req, res) => {
         id: req.params.id,
       },
     });
-    res.status(200).json({
-      status: "success",
-      data: product,
-    });
+    if (product) {
+      res.status(200).json({
+        status: "success",
+        message: "Product found successfully",
+        data: product,
+      });
+    } else {
+      res.status(404).json({
+        status: "error",
+        message: "Product not found",
+      });
+    }
   } catch (error) {
     res.status(500).json({
       status: "error",
-      message: error.message,
+      message: "Failed to find product: " + error.message,
     });
   }
 };
@@ -69,14 +88,22 @@ const updateProduct = async (req, res) => {
         },
       }
     );
-    res.status(200).json({
-      status: "success",
-      data: updatedProduct,
-    });
+    if (updatedProduct[0] > 0) {
+      res.status(200).json({
+        status: "success",
+        message: "Product updated successfully",
+        data: updatedProduct,
+      });
+    } else {
+      res.status(404).json({
+        status: "error",
+        message: "Product not found",
+      });
+    }
   } catch (error) {
     res.status(500).json({
       status: "error",
-      message: error.message,
+      message: "Failed to update product: " + error.message,
     });
   }
 };
@@ -88,14 +115,22 @@ const deleteProduct = async (req, res) => {
         id: req.params.id,
       },
     });
-    res.status(200).json({
-      status: "success",
-      data: deletedProduct,
-    });
+    if (deletedProduct > 0) {
+      res.status(200).json({
+        status: "success",
+        message: "Product deleted successfully",
+        data: deletedProduct,
+      });
+    } else {
+      res.status(404).json({
+        status: "error",
+        message: "Product not found",
+      });
+    }
   } catch (error) {
     res.status(500).json({
       status: "error",
-      message: error.message,
+      message: "Failed to delete product: " + error.message,
     });
   }
 };
