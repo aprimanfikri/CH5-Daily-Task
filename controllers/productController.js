@@ -1,36 +1,41 @@
 const imagekit = require("../lib/imageKit");
 const { Product } = require("../models");
+const ApiError = require("../utils/apiError");
 
-const createProduct = async (req, res) => {
+const createProduct = async (req, res, next) => {
   const { name, price, stock } = req.body;
-  const file = req.file;
+  let imageUrl;
   try {
-    const split = file.originalname.split(".");
-    const extension = split[split.length - 1];
-    const img = await imagekit.upload({
-      file: file.buffer,
-      fileName: `IMG-${Date.now()}.${extension}`,
-    });
+    if (!name || !price || !stock) {
+      throw new ApiError(400, "Incomplete product information");
+    }
     const newProduct = await Product.create({
       name,
       price,
       stock,
-      imageUrl: img.url,
     });
+    if (req.file) {
+      const split = req.file.originalname.split(".");
+      const extension = split[split.length - 1];
+      const img = await imagekit.upload({
+        file: req.file.buffer,
+        fileName: `IMG-${Date.now()}.${extension}`,
+      });
+      imageUrl = img.url;
+      newProduct.imageUrl = imageUrl;
+      await newProduct.save();
+    }
     res.status(201).json({
       status: "success",
       message: "Product created successfully",
       data: newProduct,
     });
   } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Failed to create product: " + error.message,
-    });
+    next(new ApiError(500, "Failed to create product: " + error.message));
   }
 };
 
-const findProducts = async (req, res) => {
+const findProducts = async (req, res, next) => {
   try {
     const products = await Product.findAll();
     res.status(200).json({
@@ -39,14 +44,11 @@ const findProducts = async (req, res) => {
       data: products,
     });
   } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Failed to find products: " + error.message,
-    });
+    next(new ApiError(500, "Failed to find products: " + error.message));
   }
 };
 
-const findProductById = async (req, res) => {
+const findProductById = async (req, res, next) => {
   try {
     const product = await Product.findOne({
       where: {
@@ -60,55 +62,54 @@ const findProductById = async (req, res) => {
         data: product,
       });
     } else {
-      res.status(404).json({
-        status: "error",
-        message: "Product not found",
-      });
+      next(new ApiError(404, `Product with id ${req.params.id} not found`));
     }
   } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Failed to find product: " + error.message,
-    });
+    next(new ApiError(500, "Failed to find product: " + error.message));
   }
 };
 
-const updateProduct = async (req, res) => {
+const updateProduct = async (req, res, next) => {
   const { name, price, stock } = req.body;
+  let imageUrl;
   try {
-    const updatedProduct = await Product.update(
-      {
-        name,
-        price,
-        stock,
+    const product = await Product.findOne({
+      where: {
+        id: req.params.id,
       },
-      {
-        where: {
-          id: req.params.id,
-        },
-      }
-    );
-    if (updatedProduct[0] > 0) {
-      res.status(200).json({
-        status: "success",
-        message: "Product updated successfully",
-        data: updatedProduct,
-      });
-    } else {
-      res.status(404).json({
-        status: "error",
-        message: "Product not found",
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Failed to update product: " + error.message,
     });
+    if (!product) {
+      return next(
+        new ApiError(404, `Product with id ${req.params.id} not found`)
+      );
+    }
+    if (req.file) {
+      const split = req.file.originalname.split(".");
+      const extension = split[split.length - 1];
+      const img = await imagekit.upload({
+        file: req.file.buffer,
+        fileName: `IMG-${Date.now()}.${extension}`,
+      });
+      imageUrl = img.url;
+    }
+    product.name = name || product.name;
+    product.price = price || product.price;
+    product.stock = stock || product.stock;
+    if (imageUrl) {
+      product.imageUrl = imageUrl;
+    }
+    await product.save();
+    res.status(200).json({
+      status: "success",
+      message: "Product updated successfully",
+      data: product,
+    });
+  } catch (error) {
+    next(new ApiError(500, "Failed to update product: " + error.message));
   }
 };
 
-const deleteProduct = async (req, res) => {
+const deleteProduct = async (req, res, next) => {
   try {
     const deletedProduct = await Product.destroy({
       where: {
@@ -119,19 +120,12 @@ const deleteProduct = async (req, res) => {
       res.status(200).json({
         status: "success",
         message: "Product deleted successfully",
-        data: deletedProduct,
       });
     } else {
-      res.status(404).json({
-        status: "error",
-        message: "Product not found",
-      });
+      next(new ApiError(404, `Product with id ${req.params.id} not found`));
     }
   } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "Failed to delete product: " + error.message,
-    });
+    next(new ApiError(500, "Failed to delete product: " + error.message));
   }
 };
 
