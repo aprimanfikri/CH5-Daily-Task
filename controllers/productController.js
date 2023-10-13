@@ -1,8 +1,9 @@
 const imagekit = require("../lib/imageKit");
-const { Product } = require("../models");
+const { Product, Shop } = require("../models");
 const ApiError = require("../utils/apiError");
 
 const createProduct = async (req, res, next) => {
+  const { shopId } = req.params;
   const { name, price, stock } = req.body;
   let imageUrl;
   try {
@@ -25,6 +26,10 @@ const createProduct = async (req, res, next) => {
       newProduct.imageUrl = imageUrl;
       await newProduct.save();
     }
+
+    const shop = await Shop.findByPk(shopId);
+    shop.productId = newProduct.id;
+    await shop.save();
     res.status(201).json({
       status: "success",
       message: "Product created successfully",

@@ -6,7 +6,9 @@ module.exports = async (req, res, next) => {
   try {
     const bearerToken = req.headers.authorization;
     if (!bearerToken) {
-      return next(new ApiError(401, "Token not found"));
+      return next(
+        new ApiError(403, "Token not found. Please provide a valid token.")
+      );
     }
     const token = bearerToken.split("Bearer ")[1];
     const payload = jwt.verify(token, process.env.JWT_SECRET);
@@ -16,6 +18,6 @@ module.exports = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    next(new ApiError(401, error.message));
+    next(new ApiError(403, error.message));
   }
 };

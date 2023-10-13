@@ -4,7 +4,8 @@ const ApiError = require("../utils/apiError");
 const jwt = require("jsonwebtoken");
 
 const register = async (req, res, next) => {
-  const { name, email, password, confirmPassword, age, address } = req.body;
+  const { name, email, password, confirmPassword, age, address, role } =
+    req.body;
   try {
     const userExists = await Auth.findOne({ where: { email } });
     // validasi check email
@@ -27,6 +28,7 @@ const register = async (req, res, next) => {
       name,
       age,
       address,
+      role,
     });
     await Auth.create({
       email,
@@ -84,4 +86,21 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login };
+const check = async (req, res, next) => {
+  try {
+    const user = req.user;
+    res.status(200).json({
+      status: "success",
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.Auth.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    next(new ApiError(500, error.message));
+  }
+};
+
+module.exports = { register, login, check };
