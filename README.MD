@@ -11,4 +11,4 @@ sesuai db diagram, terdapat 4 resources dalam sistem kita : user, auth, product 
 9. setiap API untuk get data INCLUDE models yang mempunyai relasi, berikan di data pada response API nya
 10. buat validasi di setiap API
 
-![My Image](/public/img/db-diagram.png)
+![My Image](/public/images/db-diagram.png)
