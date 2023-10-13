@@ -6,22 +6,21 @@ const authentication = require("../middlewares/authenticate");
 const checkRole = require("../middlewares/checkRole");
 const checkOwnership = require("../middlewares/checkOwner");
 
-router.route("/").get(authentication, checkRole, Product.findProducts);
-
 router
-  .route("/:id")
-  .get(Product.findProductById)
-  .put(upload.single("image"), Product.updateProduct)
-  .delete(Product.deleteProduct);
-
-router
-  .route("/:shopId/shop")
+  .route("/")
+  .get(authentication, Product.getAll)
   .post(
     authentication,
     checkRole("Owner"),
     checkOwnership,
     upload.single("image"),
-    Product.createProduct
+    Product.create
   );
+
+router
+  .route("/:id")
+  .get(Product.getOne)
+  .put(upload.single("image"), Product.update)
+  .delete(Product.remove);
 
 module.exports = router;

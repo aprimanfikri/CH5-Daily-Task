@@ -1,9 +1,8 @@
 const imagekit = require("../lib/imageKit");
-const { Product, Shop } = require("../models");
+const { Product, Shop, User } = require("../models");
 const ApiError = require("../utils/apiError");
 
-const createProduct = async (req, res, next) => {
-  const { shopId } = req.params;
+const create = async (req, res, next) => {
   const { name, price, stock } = req.body;
   let imageUrl;
   try {
@@ -14,6 +13,7 @@ const createProduct = async (req, res, next) => {
       name,
       price,
       stock,
+      shopId: req.user.shopId,
     });
     if (req.file) {
       const split = req.file.originalname.split(".");
@@ -27,8 +27,7 @@ const createProduct = async (req, res, next) => {
       await newProduct.save();
     }
 
-    const shop = await Shop.findByPk(shopId);
-    shop.productId = newProduct.id;
+    const shop = await Shop.findByPk(req.user.shopId);
     await shop.save();
     res.status(201).json({
       status: "success",
@@ -40,9 +39,19 @@ const createProduct = async (req, res, next) => {
   }
 };
 
-const findProducts = async (req, res, next) => {
+const getAll = async (req, res, next) => {
   try {
-    const products = await Product.findAll();
+    const products = await Product.findAll({
+      attributes: {
+        exclude: ["createdAt", "updatedAt"],
+      },
+      include: {
+        model: Shop,
+        attributes: {
+          exclude: ["createdAt", "updatedAt"],
+        },
+      },
+    });
     res.status(200).json({
       status: "success",
       message: "List of products found successfully",
@@ -53,7 +62,7 @@ const findProducts = async (req, res, next) => {
   }
 };
 
-const findProductById = async (req, res, next) => {
+const getOne = async (req, res, next) => {
   try {
     const product = await Product.findOne({
       where: {
@@ -74,7 +83,7 @@ const findProductById = async (req, res, next) => {
   }
 };
 
-const updateProduct = async (req, res, next) => {
+const update = async (req, res, next) => {
   const { name, price, stock } = req.body;
   let imageUrl;
   try {
@@ -114,7 +123,7 @@ const updateProduct = async (req, res, next) => {
   }
 };
 
-const deleteProduct = async (req, res, next) => {
+const remove = async (req, res, next) => {
   try {
     const deletedProduct = await Product.destroy({
       where: {
@@ -135,9 +144,9 @@ const deleteProduct = async (req, res, next) => {
 };
 
 module.exports = {
-  createProduct,
-  findProducts,
-  findProductById,
-  updateProduct,
-  deleteProduct,
+  create,
+  getAll,
+  getOne,
+  update,
+  remove,
 };

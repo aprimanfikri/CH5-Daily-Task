@@ -4,8 +4,10 @@ const ApiError = require("../utils/apiError");
 const create = async (req, res, next) => {
   try {
     const { name } = req.body;
-    const userId = req.user.id;
-    const shop = await Shop.create({ name, userId });
+    const shop = await Shop.create({ name });
+    const user = await User.findByPk(req.user.id);
+    user.shopId = shop.id;
+    await user.save();
     res.status(201).json({
       status: "success",
       message: "Create shop success",

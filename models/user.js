@@ -12,8 +12,8 @@ module.exports = (sequelize, DataTypes) => {
       User.hasOne(models.Auth, {
         foreignKey: "userId",
       });
-      User.hasMany(models.Shop, {
-        foreignKey: "userId",
+      User.belongsTo(models.Shop, {
+        foreignKey: "shopId",
       });
     }
   }
@@ -26,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM(["Owner", "Staff"]),
         defaultValue: "Staff",
       },
+      shopId: DataTypes.INTEGER,
     },
     {
       sequelize,

@@ -1,4 +1,4 @@
-const { User, Shop } = require("../models");
+const { User, Shop, Product } = require("../models");
 const ApiError = require("../utils/apiError");
 
 const getAll = async (req, res, next) => {
@@ -7,14 +7,18 @@ const getAll = async (req, res, next) => {
       attributes: {
         exclude: ["createdAt", "updatedAt"],
       },
-      include: [
-        {
-          model: Shop,
+      include: {
+        model: Shop,
+        attributes: {
+          exclude: ["createdAt", "updatedAt"],
+        },
+        include: {
+          model: Product,
           attributes: {
             exclude: ["createdAt", "updatedAt"],
           },
         },
-      ],
+      },
     });
     res.status(200).json({
       status: "success",

@@ -55,7 +55,15 @@ const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     // validasi check email
-    const user = await Auth.findOne({ where: { email }, include: ["User"] });
+    const user = await Auth.findOne({
+      where: { email },
+      include: {
+        model: User,
+        attributes: {
+          exclude: ["createdAt", "updatedAt"],
+        },
+      },
+    });
     if (!user) {
       return next(new ApiError(400, "Email not found"));
     }
